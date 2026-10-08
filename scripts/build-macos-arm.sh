@@ -40,7 +40,7 @@ iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/ftpseg.icns"
 # Ad-hoc signing is not Developer ID signing or Apple notarization.
 codesign --force --sign - "$APP"
 codesign --verify --deep --strict "$APP"
-lipo -verify_arch arm64 "$APP/Contents/MacOS/ftpseg-gui"
-lipo -verify_arch arm64 "$OUT/ftpseg"
+lipo "$APP/Contents/MacOS/ftpseg-gui" -verify_arch arm64
+lipo "$OUT/ftpseg" -verify_arch arm64
 ditto -c -k --sequesterRsrc --keepParent "$APP" "$OUT/ftpseg-macos-arm64.zip"
 echo "Built $OUT/ftpseg-macos-arm64.zip and $OUT/ftpseg"
