@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">ftpseg application icon</title>
+  <desc id="desc">Three download streams merge into a white arrow over a cyan download tray on a rounded midnight-blue tile.</desc>
+  <defs>
+    <linearGradient id="tile" x1="64" y1="32" x2="448" y2="480" gradientUnits="userSpaceOnUse"><stop stop-color="#244E9A"/><stop offset=".52" stop-color="#142B57"/><stop offset="1" stop-color="#0B1834"/></linearGradient>
+    <linearGradient id="stream" x1="164" y1="104" x2="342" y2="342" gradientUnits="userSpaceOnUse"><stop stop-color="#C7F4FF"/><stop offset="1" stop-color="#50C8F5"/></linearGradient>
+    <linearGradient id="tray" x1="136" y1="350" x2="376" y2="412" gradientUnits="userSpaceOnUse"><stop stop-color="#50DDDF"/><stop offset="1" stop-color="#4094FF"/></linearGradient>
+  </defs>
+  <rect x="24" y="24" width="464" height="464" rx="108" fill="url(#tile)"/>
+  <rect x="25" y="25" width="462" height="462" rx="107" fill="none" stroke="#8AB7F0" stroke-opacity=".22" stroke-width="2"/>
+  <path d="M170 119V193Q170 217 194 241L222 269M342 119V193Q342 217 318 241L290 269" fill="none" stroke="url(#stream)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M256 112V295" fill="none" stroke="#F1FAFF" stroke-width="32" stroke-linecap="round"/>
+  <path d="M207 279L256 329L305 279" fill="none" stroke="#F1FAFF" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M139 350V383Q139 401 157 401H355Q373 401 373 383V350" fill="none" stroke="url(#tray)" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

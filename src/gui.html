@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ftpseg · 文件传输</title>
+<style>
+:root{font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;color:#e6edf6;background:#0c1220;color-scheme:dark}*{box-sizing:border-box}body{margin:0}button,input,select{font:inherit}button{cursor:pointer;border:1px solid #34425b;border-radius:9px;background:#202e47;color:#e6edf6;padding:8px 13px}button:hover{background:#304567}button:disabled{opacity:.45;cursor:not-allowed}.primary{background:#4074ed;border-color:#4074ed}.primary:hover{background:#5987f5}.danger{color:#ffadb0}.muted{color:#94a5be}.shell{max-width:1500px;margin:auto;padding:20px 28px}header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}h1{font-size:24px;margin:0}h1 span{color:#70a3ff}h2{font-size:16px;margin:0 0 14px}.subtitle{color:#96a8c4;font-size:12px}.layout{display:grid;grid-template-columns:280px minmax(0,1fr);gap:16px}.panel{background:#151f31;border:1px solid #293850;border-radius:15px;padding:18px;min-width:0;margin-bottom:16px}.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.between{justify-content:space-between}.sites{display:grid;gap:8px}.site{display:block;text-align:left;width:100%;padding:11px 12px}.site.active{background:#264572;border-color:#5587ed}.site small{display:block;color:#9dafc9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:13px}.toolbar input{flex:1;min-width:180px}.tablewrap{overflow:auto;max-height:440px}table{border-collapse:collapse;width:100%;text-align:left}th{position:sticky;top:0;background:#1c2940;color:#aabbd2;font-size:12px}td,th{padding:10px 12px;border-bottom:1px solid #293750}td{white-space:nowrap}tr:hover td{background:#1c2c45}input,select{border:1px solid #374760;background:#101a2a;border-radius:9px;padding:8px 10px;color:#e6edf6;min-width:0}input[type=checkbox]{accent-color:#598bff}.filename{border:0;background:none;padding:0;color:#d8e6ff;text-align:left}.filename:hover{color:#7da9ff}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}label{display:grid;gap:5px;color:#aabbd2;font-size:12px}label input,label select{width:100%;font-size:14px}label.check{display:flex;align-items:center;gap:7px}label.check input{width:auto}.hint{font-size:12px;color:#94a5be;margin:9px 0 0}.jobs{display:grid;gap:10px}.job{padding:12px;background:#101a2a;border:1px solid #2b3a55;border-radius:10px}.jobtop{display:flex;align-items:center;justify-content:space-between;gap:12px}.jobname{font-weight:600;overflow-wrap:anywhere}.meter{height:7px;border-radius:6px;background:#30405a;overflow:hidden;margin:9px 0 5px}.meter>span{height:100%;display:block;background:linear-gradient(90deg,#477aed,#56c8bc)}.jobmeta{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:#9babca}.error{color:#ffb5aa;overflow-wrap:anywhere}dialog{border:1px solid #3e5374;background:#162238;color:#e7eef9;border-radius:14px;padding:22px;width:min(520px,calc(100vw - 30px));box-shadow:0 16px 70px #0009}dialog::backdrop{background:#060b16bb}dialog h2{margin-bottom:16px}.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}#toast{position:fixed;bottom:22px;right:22px;background:#243958;padding:12px 18px;border-radius:10px;box-shadow:0 8px 40px #0008;max-width:min(500px,90vw);display:none;z-index:5}#toast.show{display:block}@media(max-width:800px){.shell{padding:14px}.layout{grid-template-columns:1fr}.grid{grid-template-columns:1fr}header{align-items:flex-start}td,th{padding:8px}}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.panel-head h2{margin:0}.panel-summary{color:#aabbd2;font-size:12px;overflow-wrap:anywhere}.collapse-toggle{min-width:78px}.panel-body{margin-top:16px}.panel.collapsed .panel-body{display:none}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}.stat{background:#101a2a;border:1px solid #2b3a55;border-radius:10px;padding:10px}.stat b{display:block;font-size:17px;color:#e6edf6;overflow-wrap:anywhere}.stat small{color:#93a8c8}.tabs{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 14px}.tabs button{padding:7px 11px}.tabs button[aria-selected=true]{background:#35588e;border-color:#7299de}.job.running{border-color:#527bbb}.job-status{color:#9babca}@media(max-width:580px){.stats{grid-template-columns:1fr 1fr}.stats .stat:last-child{grid-column:span 2}}
+.closed-view{min-height:100vh;display:grid;place-items:center;padding:24px}.closed-card{max-width:560px;text-align:center;padding:38px;background:#151f31;border:1px solid #34496a;border-radius:20px;box-shadow:0 20px 80px #0005}.closed-icon{font-size:44px;color:#70a3ff;margin-bottom:16px}.closed-card h1{margin-bottom:14px}.closed-card p{color:#aabbd2}.closed-card .row{justify-content:center;margin-top:22px}[hidden]{display:none!important}
+.job-selection-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;color:#94a5be;font-size:12px}.job-selection-row #clearHistory{margin-left:auto}.job-selection-row label{display:flex;align-items:center;gap:7px;cursor:pointer}.quiet-button{background:transparent;padding:5px 9px;font-size:12px}.batch-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0;margin:0}.batch-actions button{padding:5px 9px;font-size:12px}.job.selected{background:#1d304c;border-color:#7299de;box-shadow:inset 3px 0 #7299de}.jobCheck{width:17px;height:17px;flex-shrink:0;cursor:pointer}.jobCheck:disabled{cursor:not-allowed}@media(max-width:580px){.batch-actions{gap:7px}.batch-actions #jobSelection{flex:1}.batch-actions #batchStatus{flex-basis:100%}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header>
+<div>
+<h1>
+<span>ftpseg</span> · 文件传输</h1>
+<div class="subtitle">FTP / FTPS · 多连接分段下载 · 断点续传</div>
+</div>
+<div class="row">
+<button id="settingsBtn">⚙ 下载设置</button>
+<button id="exitBtn" title="无进行中或待下载任务时关闭 GUI">退出应用</button>
+</div>
+</header>
+<div class="layout">
+<aside>
+<section class="panel">
+<div class="row between">
+<h2>站点</h2>
+<button id="addSite" class="primary">＋ 新建</button>
+</div>
+<div id="sites" class="sites">
+</div>
+<div class="row" style="margin-top:12px">
+<button id="editSite" disabled>编辑</button>
+<button id="deleteSite" class="danger" disabled>删除</button>
+</div>
+</section>
+<section class="panel">
+<h2>操作提示</h2>
+<p class="hint">选中站点后可浏览目录。勾选文件或文件夹加入队列；目录会递归下载并保留子目录结构。点击文件夹名称进入下级目录。两个列表均可收起，汇总信息仍会实时更新。</p>
+<p class="hint">下载任务继续使用 Rust 多线程分段传输引擎。</p>
+</section>
+</aside>
+<main>
+<section class="panel" id="remotePanel">
+<div class="panel-head">
+<h2>远端文件</h2>
+<span id="browserStatus" class="panel-summary" aria-live="polite">选择站点以开始</span>
+<button type="button" class="collapse-toggle" id="remoteToggle" aria-expanded="true" aria-controls="remoteBody">收起 ▲</button>
+</div>
+<div class="panel-body" id="remoteBody">
+<div class="toolbar">
+<button id="up" disabled>↑ 上级</button>
+<input id="remotePath" value="/" aria-label="远端路径">
+<button id="browse" disabled>前往</button>
+<button id="refresh" disabled>刷新</button>
+</div>
+<div class="tablewrap">
+<table>
+<thead>
+<tr>
+<th>
+<input id="selectAll" type="checkbox" aria-label="全选文件">
+</th>
+<th>名称</th>
+<th>类型</th>
+<th>大小</th>
+<th>修改时间</th>
+</tr>
+</thead>
+<tbody id="entries">
+<tr>
+<td colspan="5" class="muted">尚未连接站点</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="row between" style="margin-top:14px">
+<span id="selection" class="muted">选择文件或目录加入下载队列</span>
+<button class="primary" id="enqueue" disabled>↓ 加入下载队列</button>
+</div>
+</div>
+</section>
+<section class="panel" id="queuePanel">
+<div class="panel-head">
+<h2>下载队列</h2>
+<span id="queueSummary" class="panel-summary" aria-live="polite">暂无任务</span>
+<button type="button" class="collapse-toggle" id="queueToggle" aria-expanded="true" aria-controls="queueBody">收起 ▲</button>
+</div>
+<div class="panel-body" id="queueBody">
+<div class="stats">
+<div class="stat">
+<small>总共数据（已知）</small>
+<b id="totalBytes">0 B</b>
+</div>
+<div class="stat">
+<small>已下载数据</small>
+<b id="downloadedBytes">0 B</b>
+</div>
+<div class="stat">
+<small>实时下载速度</small>
+<b id="downloadSpeed">0 B/s</b>
+</div>
+</div>
+<div class="tabs" role="tablist" aria-label="下载状态筛选">
+<button type="button" role="tab" data-filter="all" aria-selected="true">全部 <span data-count="all">0</span>
+</button>
+<button type="button" role="tab" data-filter="running" aria-selected="false">正在下载 <span data-count="running">0</span>
+</button>
+<button type="button" role="tab" data-filter="queued" aria-selected="false">待下载 <span data-count="queued">0</span>
+</button>
+<button type="button" role="tab" data-filter="paused" aria-selected="false">已暂停 <span data-count="paused">0</span>
+</button>
+<button type="button" role="tab" data-filter="history" aria-selected="false">历史（只读） <span data-count="history">0</span>
+</button>
+<button type="button" role="tab" data-filter="done" aria-selected="false">已完成 <span data-count="done">0</span>
+</button>
+<button type="button" role="tab" data-filter="failed" aria-selected="false">失败/取消 <span data-count="failed">0</span>
+</button>
+</div>
+<div class="job-selection-row">
+<label id="jobSelectAllLabel" hidden><input id="jobSelectAll" type="checkbox" aria-label="全选当前分类"> 全选</label>
+<div id="batchActions" class="batch-actions" hidden aria-label="已选任务操作">
+<span id="jobSelection" aria-live="polite">已选 0 项</span>
+<button id="clearJobSelection" class="quiet-button">清空选中</button>
+<span id="batchStatus" class="muted" role="status" hidden>正在执行，请稍候…</span>
+<button id="batchPause">暂停</button>
+<button id="batchResume">继续</button>
+<button id="batchCancel" class="danger">取消/清理</button>
+<button id="batchRetry">重试</button>
+</div>
+<button id="clearHistory" class="quiet-button">清除历史缓存</button>
+</div>
+<p class="hint">暂停保留文件与续传记录；取消会删除未完成文件及续传记录。浏览器仅缓存任务显示信息（含远端/本机路径，请注意隐私），不会自动重新加入队列。服务重启后的历史记录只读，不能继续旧任务。</p>
+<div id="jobs" class="jobs" role="tabpanel" aria-live="off">
+<span class="muted">尚无下载任务</span>
+</div>
+</div>
+</section>
+</main>
+</div>
+</div>
+<dialog id="siteDialog">
+<form id="siteForm">
+<h2 id="siteTitle">新建站点</h2>
+<div class="grid">
+<label>站点名称<input name="name" required maxlength="100" placeholder="例如：镜像服务器">
+</label>
+<label>服务器地址<input name="host" required placeholder="ftp.example.com">
+</label>
+<label>端口<input name="port" type="number" min="1" max="65535" value="21" required>
+</label>
+<label>连接方式<select name="tls">
+<option value="none">FTP</option>
+<option value="explicit">显式 FTPS</option>
+<option value="implicit">隐式 FTPS</option>
+</select>
+</label>
+<label>用户名<input name="user" value="anonymous" autocomplete="username">
+</label>
+<label>密码<input name="password" type="password" autocomplete="new-password" placeholder="留空保持原密码">
+</label>
+<label>字符集<input name="encoding" value="auto" placeholder="auto / utf-8 / gbk">
+</label>
+<label class="check">
+<input name="insecure" type="checkbox">跳过 TLS 证书验证（不推荐）</label>
+</div>
+<p class="hint">账号和密码使用可跨账户的轻量混淆保存，不是安全加密；拥有配置和程序的人可以还原凭据，请勿分享配置。密码不会回传给页面。</p>
+<div class="actions">
+<button type="button" data-close="siteDialog">取消</button>
+<button type="submit" class="primary">保存站点</button>
+</div>
+</form>
+</dialog>
+<dialog id="settingsDialog">
+<form id="settingsForm">
+<h2>下载设置</h2>
+<div class="grid">
+<label>同时下载任务数<input name="queue_concurrency" type="number" min="1" max="32" required>
+</label>
+<label>每个文件连接数<input name="connections" type="number" min="1" max="32" required>
+</label>
+</div>
+<label style="margin-top:12px">下载保存目录<input name="download_dir" required placeholder="本机绝对路径">
+</label>
+<p class="hint">设置将作用于后续启动的任务。目录必须是本机可写位置；相同站点的同名文件将使用断点续传。</p>
+<div class="actions">
+<button type="button" data-close="settingsDialog">取消</button>
+<button type="submit" class="primary">保存设置</button>
+</div>
+</form>
+</dialog>
+<section class="closed-view" id="closedView" hidden aria-live="polite">
+<div class="closed-card">
+<div class="closed-icon" aria-hidden="true">⏻</div>
+<h1>应用已关闭</h1>
+<p id="closedMessage">本机下载服务已退出。站点配置已经保存，您可以安全关闭此页面。</p>
+<p>再次使用时，请双击 ftpseg GUI 启动程序，程序会打开默认浏览器。</p>
+<div class="row">
+<button type="button" id="reconnectBtn" class="primary">重新连接已启动的应用</button>
+</div>
+<p class="hint" id="reconnectStatus">
+</p>
+</div>
+</section>
+<div id="toast" role="status">
+</div>
+<script>
+'use strict';
+const $=s=>document.querySelector(s);let state={sites:[],settings:{},jobs:[]},selected=null,entries=[],currentPath='/',listingToken=0,editing=null,jobFilter='all',speedSample=null,downloadSpeed=0,appClosed=false,queueBusy=false,connectedOnce=false,pollFailures=0,polling=false,uiGeneration=0;
+const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const human=n=>n==null?'—':Number(n)<1024?`${n} B`:`${(Number(n)/1024**Math.floor(Math.log(Number(n))/Math.log(1024))).toFixed(1)} ${['B','KiB','MiB','GiB','TiB'][Math.min(4,Math.floor(Math.log(Number(n))/Math.log(1024)))]}`;let toastTimer;function notify(message){const t=$('#toast');t.textContent=message;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),5000)}
+async function api(url,options={}){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),url==='/api/queue'?300000:url==='/api/state'?5000:45000);let r;try{r=await fetch(url,{signal:controller.signal,...options,headers:{'Content-Type':'application/json',...options.headers},cache:'no-store'})}finally{clearTimeout(timer)};let data;try{data=await r.json()}catch{throw Error(`服务器响应异常 (${r.status})`)}if(!r.ok)throw Error(data.error||`请求失败 (${r.status})`);return data}async function attempt(f){try{return await f()}catch(e){notify(e.message||String(e));return null}}
+function site(){return state.sites.find(s=>String(s.id)===String(selected))}function join(path,name){return (path==='/'?'':path.replace(/\/$/,''))+'/'+name}function parent(path){const p=path.replace(/\/$/,'');return p.slice(0,p.lastIndexOf('/'))||'/'}
+function renderSites(){const box=$('#sites');box.replaceChildren();if(!state.sites.length)box.innerHTML='<span class="muted">还没有站点，点击「新建」开始</span>';
+for(const s of state.sites){const b=document.createElement('button');b.className='site'+(String(s.id)===String(selected)?' active':'');b.innerHTML=`<strong>${escape(s.name)}</strong><small>${escape(s.host)}:${escape(s.port)} · ${escape(s.user||'anonymous')}</small>`;b.onclick=()=>{selected=s.id;currentPath='/';renderSites();browse('/')};box.append(b)}$('#editSite').disabled=$('#deleteSite').disabled=$('#browse').disabled=$('#refresh').disabled=!site()}
+function renderEntries(){const body=$('#entries');body.replaceChildren();
+$('#remotePath').value=currentPath;
+$('#up').disabled=!site()||currentPath==='/';
+$('#selectAll').checked=false;
+for(const e of entries){if(e.name==='.'||e.name==='..')continue;
+const tr=document.createElement('tr');
+const check=document.createElement('input');check.type='checkbox';check.className='entryCheck';check.dataset.name=e.name;check.dataset.directory=String(!!e.is_dir);check.setAttribute('aria-label','选择 '+e.name);check.onchange=updateSelection;
+const td=document.createElement('td');td.append(check);tr.append(td);
+const name=document.createElement('td'),button=document.createElement('button');button.className='filename';button.textContent=(e.is_dir?'📁 ':'📄 ')+e.name;if(e.is_dir)button.onclick=()=>browse(join(currentPath,e.name));else button.onclick=()=>{check.checked=!check.checked;updateSelection()};name.append(button);tr.append(name);
+for(const value of [e.is_dir?'文件夹':'文件',human(e.size),e.modify||'—']){const c=document.createElement('td');c.textContent=value;tr.append(c)}body.append(tr)}if(!body.children.length)body.innerHTML='<tr><td colspan="5" class="muted">目录为空</td></tr>';updateSelection()}
+function updateSelection(){const checks=[...document.querySelectorAll('.entryCheck:not(:disabled)')];
+const selectedChecks=checks.filter(c=>c.checked),n=selectedChecks.length,dirs=selectedChecks.filter(c=>c.dataset.directory==='true').length;
+$('#selection').textContent=n?`已选择 ${n-dirs} 个文件、${dirs} 个目录（递归下载）`:'选择文件或目录加入下载队列';
+$('#enqueue').disabled=!n||queueBusy;
+$('#selectAll').checked=checks.length>0&&checks.every(c=>c.checked)}
+async function browse(path){if(!site())return;
+const token=++listingToken;
+$('#browserStatus').textContent='正在读取…';
+const data=await attempt(()=>api(`/api/list?site_id=${encodeURIComponent(selected)}&path=${encodeURIComponent(path)}`));if(token!==listingToken)return;if(!data){$('#browserStatus').textContent='读取失败 · '+(site()?.name||'站点')+' · '+currentPath;return}entries=data.entries||[];currentPath=path;
+$('#browserStatus').textContent=`${site()?.name||'远端'} · ${currentPath} · ${entries.filter(e=>e.is_dir).length} 个目录 / ${entries.filter(e=>!e.is_dir).length} 个文件 · 已知 ${human(entries.reduce((n,e)=>n+(Number(e.size)||0),0))}`;renderEntries()}
+const CACHE_KEY='ftpseg.queue.display.v1',CACHE_VERSION=1,HISTORY_CAP=1000;
+const JOB_FIELDS=['id','site_id','remote','local','status','total','downloaded','error','site_name'];
+let cacheEnabled=true,cachedInstance=null,historyJobs=[],liveVerified=false,batchBusy=false,jobSelection=new Set(),pendingJobs=new Set();
+function displayJob(j){const out={};
+for(const k of JOB_FIELDS)if(['string','number','boolean'].includes(typeof j[k]))out[k]=j[k];return out}
+function jobKey(j){return String(j.id)}
+function loadCache(){try{const raw=localStorage.getItem(CACHE_KEY);if(!raw)return;
+const c=JSON.parse(raw);if(c.version!==CACHE_VERSION||(typeof c.instance_id!=='string'||!c.instance_id)||!Array.isArray(c.jobs)||!Array.isArray(c.history))throw Error('缓存格式无效');cachedInstance=c.instance_id;state.jobs=c.jobs.filter(j=>j&&typeof j==='object'&&j.id!=null).map(displayJob);historyJobs=c.history.filter(j=>j&&typeof j==='object'&&j.id!=null).slice(-HISTORY_CAP).map(j=>({...displayJob(j),_instance:typeof j._instance==='string'?j._instance:'unknown'}))}catch{cacheEnabled=false}}
+function saveCache(){if(!cacheEnabled||!cachedInstance)return;try{localStorage.setItem(CACHE_KEY,JSON.stringify({version:CACHE_VERSION,instance_id:cachedInstance,jobs:state.jobs.map(j=>({...displayJob(j),site_name:j.site_name||state.sites.find(s=>String(s.id)===String(j.site_id))?.name||'站点已删除'})),history:historyJobs.slice(-HISTORY_CAP).map(j=>({...displayJob(j),_instance:j._instance}))}))}catch{cacheEnabled=false}}
+function syncState(data){const previous=cachedInstance,next=typeof data.instance_id==='string'?data.instance_id:null;if(cachedInstance&&next!==cachedInstance){historyJobs=[...historyJobs,...state.jobs.map(j=>({...displayJob(j),site_name:j.site_name||state.sites.find(s=>String(s.id)===String(j.site_id))?.name||'站点已删除',_instance:cachedInstance}))].slice(-HISTORY_CAP);speedSample=null;downloadSpeed=0}state=data;state.jobs=Array.isArray(data.jobs)?data.jobs:[];cachedInstance=next;liveVerified=!!next;if(next!==previous)jobSelection.clear();
+if(!batchBusy)pruneJobSelection();saveCache()}
+function pruneJobSelection(){for(const id of jobSelection)if(!state.jobs.some(j=>jobKey(j)===id&&selectable(j)&&visibleJob(j)))jobSelection.delete(id)}
+function eligible(j,action){if(!liveVerified||appClosed||j._instance||!state.jobs.includes(j))return false;if(action==='pause')return ['queued','running'].includes(j.status);if(action==='resume')return j.status==='paused';if(action==='retry')return ['failed','cancelled','paused'].includes(j.status);if(action==='cancel')return ['queued','running','paused','failed'].includes(j.status)||(j.status==='cancelled'&&!!j.error);return false}
+function selectable(j){return ['pause','resume','cancel','retry'].some(a=>eligible(j,a))}
+function selectedJobs(){return state.jobs.filter(j=>jobSelection.has(jobKey(j)))}
+function updateJobSelection(){const visible=state.jobs.filter(visibleJob).filter(selectable),chosen=selectedJobs(),canSelect=liveVerified&&!appClosed&&jobFilter!=='history';
+$('#jobSelectAllLabel').hidden=!canSelect||!visible.length;
+$('#clearHistory').hidden=!historyJobs.length&&liveVerified;
+document.querySelectorAll('[data-filter]').forEach(tab=>tab.disabled=batchBusy);
+$('#jobSelectAll').disabled=batchBusy||!visible.length;
+$('#jobSelectAll').checked=!!visible.length&&visible.every(j=>jobSelection.has(jobKey(j)));
+$('#jobSelectAll').indeterminate=visible.some(j=>jobSelection.has(jobKey(j)))&&!$('#jobSelectAll').checked;
+$('#batchActions').hidden=!canSelect||!jobSelection.size;
+$('#jobSelection').textContent='已选 '+jobSelection.size+' 项';
+$('#clearJobSelection').disabled=batchBusy;
+$('#batchStatus').hidden=!batchBusy;
+for(const [a,id,label] of [['pause','batchPause','暂停'],['resume','batchResume','继续'],['cancel','batchCancel','取消/清理'],['retry','batchRetry','重试']]){const n=chosen.filter(j=>eligible(j,a)).length,button=$('#'+id);button.hidden=!n&&!batchBusy;button.disabled=batchBusy||!n;button.textContent=label+' ('+n+')'}
+document.querySelectorAll('.jobCheck').forEach(check=>{check.checked=!check.historical&&jobSelection.has(check.dataset.id);check.row.classList.toggle('selected',check.checked)})}
+async function runJobActions(action,jobs){if(batchBusy||appClosed)return;
+const generation=uiGeneration,instance=state.instance_id,targets=jobs.filter(j=>eligible(j,action)&&!pendingJobs.has(jobKey(j))),skipped=jobs.length-targets.length;if(!targets.length)return;if(action==='cancel'&&!confirm('取消 '+targets.length+' 个任务并删除未完成文件及续传记录？再次重试将从头下载。'))return;batchBusy=true;renderJobs(false);let cursor=0,success=0;
+const failures=[],succeeded=new Set();try{await Promise.all(Array.from({length:Math.min(4,targets.length)},async()=>{while(cursor<targets.length){const target=targets[cursor++],j=state.jobs.find(item=>jobKey(item)===jobKey(target))||target;if(generation!==uiGeneration||instance!==state.instance_id||!eligible(j,action)){failures.push(String(j.remote||j.id)+': 状态已变化，已跳过');continue}pendingJobs.add(jobKey(j));try{await api('/api/jobs/'+action,{method:'POST',body:JSON.stringify({id:j.id})});success++;succeeded.add(jobKey(j))}catch(e){failures.push(String(j.remote||j.id)+': '+(e.message||e))}finally{pendingJobs.delete(jobKey(j))}}}));try{await refresh()}catch(e){failures.push('刷新失败: '+(e.message||e))}notify('操作完成：成功 '+success+'，跳过 '+skipped+'，失败 '+failures.length+(failures.length?' · '+failures.join('；'):''))}finally{if(generation===uiGeneration&&instance===state.instance_id){for(const id of succeeded)jobSelection.delete(id)}batchBusy=false;pruneJobSelection();renderJobs(false)}}
+function visibleJob(j){return jobFilter==='history'?!!j._instance:!j._instance&&(jobFilter==='all'||(jobFilter==='running'?['running','pausing','cancelling'].includes(j.status):jobFilter==='failed'?['failed','cancelled'].includes(j.status):j.status===jobFilter))}
+function renderJobs(measure=true){const box=$('#jobs');box.replaceChildren();
+const jobs=state.jobs||[],running=jobs.filter(j=>['running','pausing','cancelling'].includes(j.status)).length,queued=jobs.filter(j=>j.status==='queued').length;
+const knownTotal=jobs.reduce((n,j)=>n+(Number(j.total)||0),0),downloaded=jobs.reduce((n,j)=>n+(Number(j.downloaded)||0),0),activeBytes=jobs.filter(j=>['running','pausing','cancelling'].includes(j.status)).reduce((n,j)=>n+(Number(j.downloaded)||0),0),now=performance.now();if(measure){if(speedSample){const elapsed=(now-speedSample.time)/1000;if(elapsed>.15)downloadSpeed=running?Math.max(0,(activeBytes-speedSample.bytes)/elapsed):0}else downloadSpeed=0;speedSample={time:now,bytes:activeBytes}}$('#totalBytes').textContent=human(knownTotal);
+$('#downloadedBytes').textContent=human(downloaded);
+$('#downloadSpeed').textContent=human(downloadSpeed)+'/s';
+$('#queueSummary').textContent=jobs.length+' 个任务 · '+running+' 活跃 · '+queued+' 待下载 · '+human(downloaded)+' / '+human(knownTotal)+(liveVerified?'':' · 缓存未验证（禁操作）');
+const counts={all:jobs.length,running,queued,paused:jobs.filter(j=>j.status==='paused').length,done:jobs.filter(j=>j.status==='done').length,failed:jobs.filter(j=>['failed','cancelled'].includes(j.status)).length,history:historyJobs.length};document.querySelectorAll('[data-filter]').forEach(tab=>{tab.setAttribute('aria-selected',String(tab.dataset.filter===jobFilter));tab.querySelector('[data-count]').textContent=counts[tab.dataset.filter]});
+const priority={running:0,pausing:0,cancelling:0,queued:1,paused:2,failed:3,cancelled:3,done:4};
+const visible=[...jobs,...historyJobs].filter(visibleJob).sort((a,b)=>(priority[a.status]??5)-(priority[b.status]??5)||Number(a.id)-Number(b.id));
+for(const j of visible){const div=document.createElement('div');div.className='job'+(['running','pausing','cancelling'].includes(j.status)?' running':'');
+const pct=j.total>0?Math.max(0,Math.min(100,Math.round((j.downloaded||0)/j.total*100))):0;
+const top=document.createElement('div');top.className='jobtop';
+const check=document.createElement('input');check.type='checkbox';check.className='jobCheck';check.dataset.id=jobKey(j);check.row=div;check.historical=!!j._instance;check.checked=!j._instance&&jobSelection.has(jobKey(j));check.disabled=batchBusy||!selectable(j);check.setAttribute('aria-label','选择任务 '+j.remote);check.onchange=()=>{if(check.disabled)return;if(check.checked)jobSelection.add(jobKey(j));else jobSelection.delete(jobKey(j));updateJobSelection()};
+const info=document.createElement('span');info.className='jobname';info.textContent=j.remote;if(j.local)info.title='保存至：'+j.local;
+const actions=document.createElement('span');actions.className='row';
+const status=document.createElement('span');status.className='muted';status.textContent=({queued:'等待中',running:'下载中',pausing:'正在暂停…',paused:'已暂停（文件保留）',cancelling:'正在停止并清理文件…',done:'已完成',failed:'失败',cancelled:'已取消'}[j.status]||j.status)+(j._instance?' · 旧服务历史（不可继续）':!liveVerified?' · 缓存未验证':'');actions.append(status);
+for(const [action,label] of [['pause','暂停'],['resume','继续'],['retry','重试'],['cancel','取消/清理']])if(eligible(j,action)){const b=document.createElement('button');b.textContent=label;b.disabled=batchBusy||pendingJobs.has(jobKey(j));b.onclick=()=>attempt(()=>runJobActions(action,[j]));actions.append(b)}top.append(check,info,actions);div.append(top);
+const meter=document.createElement('div');meter.className='meter';
+const fill=document.createElement('span');fill.style.width=pct+'%';meter.append(fill);div.append(meter);
+const meta=document.createElement('div');meta.className='jobmeta';
+const left=document.createElement('span');left.textContent=j.site_name||state.sites.find(s=>String(s.id)===String(j.site_id))?.name||'站点已删除';
+const right=document.createElement('span');right.textContent=human(j.downloaded||0)+' / '+human(j.total)+' · '+(j.total>0?pct+'%':'大小未知');meta.append(left,right);div.append(meta);if(j.error){const err=document.createElement('div');err.className='error';err.textContent=j.error;div.append(err)}box.append(div)}if(!visible.length){const empty=document.createElement('span');empty.className='muted';empty.textContent='当前分类没有任务';box.append(empty)}updateJobSelection()}
+function showClosed(message){appClosed=true;liveVerified=false;uiGeneration++;downloadSpeed=0;speedSample=null;document.querySelectorAll('dialog[open]').forEach(d=>d.close());document.querySelector('.shell').hidden=true;
+$('#closedView').hidden=false;
+$('#closedMessage').textContent=message||'本机下载服务已退出。站点配置已经保存，您可以安全关闭此页面。';document.title='ftpseg · 应用已关闭';
+$('#toast').classList.remove('show')}
+function showConnected(){appClosed=false;pollFailures=0;document.querySelector('.shell').hidden=false;
+$('#closedView').hidden=true;
+$('#reconnectStatus').textContent='';document.title='ftpseg · 文件传输'}
+async function refresh(reconnect=false){const generation=uiGeneration;
+const data=await api('/api/state');if(generation!==uiGeneration||appClosed&&!reconnect)return;if(reconnect)showConnected();connectedOnce=true;pollFailures=0;syncState(data);if(selected&&!site()){selected=null;entries=[];
+$('#entries').innerHTML='<tr><td colspan="5" class="muted">请选择站点</td></tr>';
+$('#browserStatus').textContent='选择站点以开始'}renderSites();renderJobs()}
+function togglePanel(panel,button){const collapsed=panel.classList.toggle('collapsed');button.setAttribute('aria-expanded',String(!collapsed));button.textContent=collapsed?'展开 ▼':'收起 ▲'}$('#remoteToggle').onclick=()=>togglePanel($('#remotePanel'),$('#remoteToggle'));
+$('#queueToggle').onclick=()=>togglePanel($('#queuePanel'),$('#queueToggle'));document.querySelectorAll('[data-filter]').forEach(tab=>tab.onclick=()=>{if(batchBusy||jobFilter===tab.dataset.filter)return;jobSelection.clear();jobFilter=tab.dataset.filter;renderJobs(false)});
+$('#addSite').onclick=()=>{editing=null;
+$('#siteTitle').textContent='新建站点';
+$('#siteForm').reset();
+$('#siteDialog').showModal()};
+$('#editSite').onclick=()=>{const s=site();if(!s)return;editing=s.id;
+$('#siteTitle').textContent='编辑站点';
+for(const key of ['name','host','port','user','tls','encoding'])$('#siteForm').elements[key].value=s[key]??'';
+$('#siteForm').elements.password.value='';
+$('#siteForm').elements.insecure.checked=!!s.insecure;
+$('#siteDialog').showModal()};
+$('#siteForm').onsubmit=e=>{e.preventDefault();attempt(async()=>{const f=e.target.elements;
+const body={name:f.name.value.trim(),host:f.host.value.trim(),port:Number(f.port.value),user:f.user.value.trim(),password:f.password.value,tls:f.tls.value,encoding:f.encoding.value.trim()||'auto',insecure:f.insecure.checked};if(editing!=null)body.id=editing;await api('/api/sites',{method:'POST',body:JSON.stringify(body)});
+$('#siteDialog').close();await refresh();notify('站点已保存')})};
+$('#deleteSite').onclick=()=>{const s=site();if(!s||!confirm(`确定删除站点「${s.name}」？`))return;attempt(async()=>{await api('/api/sites?id='+encodeURIComponent(s.id),{method:'DELETE'});selected=null;entries=[];renderEntries();await refresh()})};
+$('#browse').onclick=()=>browse($('#remotePath').value.trim()||'/');
+$('#refresh').onclick=()=>browse(currentPath);
+$('#up').onclick=()=>browse(parent(currentPath));
+$('#remotePath').onkeydown=e=>{if(e.key==='Enter')browse(e.target.value.trim()||'/')};
+$('#selectAll').onchange=e=>{document.querySelectorAll('.entryCheck:not(:disabled)').forEach(c=>c.checked=e.target.checked);updateSelection()};
+$('#enqueue').onclick=()=>attempt(async()=>{if(queueBusy)return;
+const checks=[...document.querySelectorAll('.entryCheck:checked')],paths=checks.filter(c=>c.dataset.directory!=='true').map(c=>join(currentPath,c.dataset.name)),directories=checks.filter(c=>c.dataset.directory==='true').map(c=>join(currentPath,c.dataset.name));if(!checks.length)return;
+const button=$('#enqueue'),siteId=selected;queueBusy=true;button.disabled=true;button.textContent=directories.length?'正在扫描目录…':'正在加入队列…';try{const result=await api('/api/queue',{method:'POST',body:JSON.stringify({site_id:siteId,paths,directories})});checks.forEach(c=>c.checked=false);await refresh();notify(result.ids?.length===0?(result.message||'所选目录没有可下载文件'):`${result.ids?.length??paths.length} 个文件已加入队列${directories.length?'（保留目录结构）':''}`)}finally{queueBusy=false;button.textContent='↓ 加入下载队列';updateSelection()}});
+$('#exitBtn').onclick=()=>{if(!confirm('确定退出应用？仅在队列没有进行中或待下载任务时可以退出。已暂停任务将从后端队列丢失，浏览器仅保留只读显示历史，不能自动继续。'))return;attempt(async()=>{await api('/api/shutdown',{method:'POST',body:'{}'});showClosed()})};
+$('#settingsBtn').onclick=()=>{for(const key of ['queue_concurrency','connections','download_dir'])$('#settingsForm').elements[key].value=state.settings?.[key]??'';
+$('#settingsDialog').showModal()};
+$('#settingsForm').onsubmit=e=>{e.preventDefault();attempt(async()=>{const f=e.target.elements;await api('/api/settings',{method:'POST',body:JSON.stringify({queue_concurrency:Number(f.queue_concurrency.value),connections:Number(f.connections.value),download_dir:f.download_dir.value.trim()})});
+$('#settingsDialog').close();await refresh();notify('设置已保存')})};document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$('#'+b.dataset.close).close());
+$('#reconnectBtn').onclick=async()=>{const button=$('#reconnectBtn');button.disabled=true;
+$('#reconnectStatus').textContent='正在检查本机服务…';try{await refresh(true)}catch(e){$('#reconnectStatus').textContent='应用尚未启动，请先双击 GUI 启动程序。'}finally{button.disabled=false}};
+$('#clearJobSelection').onclick=()=>{if(batchBusy)return;jobSelection.clear();renderJobs(false)};
+$('#jobSelectAll').onchange=e=>{if(batchBusy||!liveVerified||jobFilter==='history')return;
+for(const j of state.jobs.filter(visibleJob).filter(selectable)){if(e.target.checked)jobSelection.add(jobKey(j));else jobSelection.delete(jobKey(j))}renderJobs(false)};
+for(const [a,id] of [['pause','batchPause'],['resume','batchResume'],['cancel','batchCancel'],['retry','batchRetry']])$('#'+id).onclick=()=>attempt(()=>runJobActions(a,selectedJobs()));
+$('#clearHistory').onclick=()=>{historyJobs=[];if(!liveVerified)state.jobs=[];try{localStorage.removeItem(CACHE_KEY);cacheEnabled=true}catch{cacheEnabled=false}if(liveVerified)saveCache();renderJobs(false)};loadCache();renderJobs(false);attempt(refresh);setInterval(async()=>{if(document.hidden||appClosed||polling||batchBusy)return;polling=true;try{await refresh()}catch(e){if(appClosed)return;pollFailures++;if(connectedOnce&&pollFailures>=3)showClosed('无法连接本机下载服务：它可能已退出，或发生异常。请重新启动应用后再连接。');else if(pollFailures===1)notify('本机服务暂时无法连接，正在重试…')}finally{polling=false}},1200);
+</script></body></html>

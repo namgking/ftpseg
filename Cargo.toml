@@ -1,0 +1,67 @@
+[package]
+name = "ftpseg"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+description = "Cross-platform FTP/FTPS client with multi-threaded segmented downloads"
+license = "MIT"
+readme = "README.md"
+keywords = ["ftp", "ftps", "download", "cli", "segmented"]
+categories = ["command-line-utilities", "network-programming"]
+
+[lib]
+name = "ftpseg"
+path = "src/lib.rs"
+
+[[bin]]
+name = "ftpseg"
+path = "src/main.rs"
+
+[[bin]]
+name = "ftpseg-gui"
+path = "src/gui_launcher.rs"
+
+[dependencies]
+thiserror = "1.0"
+tokio = { version = "1.40", features = [
+    "rt-multi-thread",
+    "net",
+    "io-util",
+    "sync",
+    "time",
+    "macros",
+    "signal",
+    "fs",
+] }
+clap = { version = "4.5", features = ["derive", "wrap_help", "env"] }
+indicatif = "0.17"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+url = "2.5"
+percent-encoding = "2.3"
+native-tls = "0.2"
+tokio-native-tls = "0.3"
+rpassword = "7.3"
+encoding_rs = "0.8"
+
+# Windows code-page detection, GUI integration, and current-user DPAPI storage.
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = [
+    "Win32_Globalization",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_UI_Shell",
+    "Win32_System_Com",
+    "Win32_System_Registry",
+    "Win32_Security_Cryptography",
+    "Win32_System_Memory",
+    "Win32_Storage_FileSystem",
+] }
+
+[dev-dependencies]
+tokio = { version = "1.40", features = ["full"] }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = true

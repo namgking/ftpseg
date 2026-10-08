@@ -1,0 +1,32 @@
+name: macOS ARM64 release
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+      - name: Test on macOS runner
+        run: |
+          if [ "$(uname -m)" = arm64 ]; then
+            cargo test --locked --all-targets --target aarch64-apple-darwin
+          else
+            cargo test --locked --all-targets
+          fi
+      - name: Build and package ARM64 application
+        run: bash scripts/build-macos-arm.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ftpseg-macos-arm64
+          path: |
+            dist/macos-arm64/ftpseg-macos-arm64.zip
+            dist/macos-arm64/ftpseg
+          if-no-files-found: error

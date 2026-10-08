@@ -1,0 +1,12 @@
+/target
+/.rust
+/.tmp
+/.ftpseg/
+/dist/
+/downloads/
+**/*.rs.bk
+*.pdb
+
+# local runtime artefacts
+*.ftpseg-state.json
+*.ftpseg-state.json.tmp
