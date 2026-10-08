@@ -465,6 +465,9 @@ impl Gui {
 
 #[test]
 fn site_settings_queue_and_origin_protection() {
+    // Hold an FTP probe open so shutdown protection does not race an immediate
+    // connection-refused failure (notably fast on macOS loopback).
+    let ftp_listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let gui = Gui::start();
     let (status, html) = gui.call("GET", "/", None, None);
     assert_eq!(status, 200);
@@ -497,15 +500,15 @@ fn site_settings_queue_and_origin_protection() {
             .len(),
         0
     );
-    let site = r#"{"name":"Local","host":"127.0.0.1","port":21,"user":"alice","password":"a secret","tls":"none","encoding":"auto","insecure":false}"#;
+    let site = serde_json::json!({"name":"Local","host":"127.0.0.1","port":ftp_listener.local_addr().unwrap().port(),"user":"alice","password":"a secret","tls":"none","encoding":"auto","insecure":false}).to_string();
     let (status, body) = gui.call(
         "POST",
         "/api/sites",
-        Some(site),
+        Some(&site),
         Some("http://evil.example"),
     );
     assert_eq!(status, 403, "{body}");
-    let (status, body) = gui.call("POST", "/api/sites", Some(site), None);
+    let (status, body) = gui.call("POST", "/api/sites", Some(&site), None);
     assert_eq!(status, 200, "{body}");
     let site_id = serde_json::from_str::<serde_json::Value>(&body).unwrap()["id"]
         .as_u64()
@@ -553,6 +556,7 @@ fn site_settings_queue_and_origin_protection() {
         None,
     );
     assert_eq!(status, 200, "{body}");
+    drop(ftp_listener); // Release the stalled probe before waiting for cancellation.
     let (status, body) = gui.call("DELETE", &format!("/api/sites?id={site_id}"), None, None);
     assert_eq!(status, 200, "{body}");
     // Cancellation may still be cleaning up the running FTP probe.

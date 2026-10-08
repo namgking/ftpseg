@@ -1477,20 +1477,14 @@ async fn handle(mut stream: TcpStream, app: Arc<App>) -> Result<()> {
             return send(&mut stream, 400, json!({"error":"invalid header"}), false).await;
         };
         let v = v.trim();
-        if k.eq_ignore_ascii_case("host") {
-            if host.replace(v).is_some() {
-                return send(&mut stream, 400, json!({"error":"duplicate host"}), false).await;
-            }
+        if k.eq_ignore_ascii_case("host") && host.replace(v).is_some() {
+            return send(&mut stream, 400, json!({"error":"duplicate host"}), false).await;
         }
-        if k.eq_ignore_ascii_case("origin") {
-            if origin.replace(v).is_some() {
-                return send(&mut stream, 400, json!({"error":"duplicate origin"}), false).await;
-            }
+        if k.eq_ignore_ascii_case("origin") && origin.replace(v).is_some() {
+            return send(&mut stream, 400, json!({"error":"duplicate origin"}), false).await;
         }
-        if k.eq_ignore_ascii_case("content-length") {
-            if length.replace(v).is_some() {
-                return send(&mut stream, 400, json!({"error":"duplicate length"}), false).await;
-            }
+        if k.eq_ignore_ascii_case("content-length") && length.replace(v).is_some() {
+            return send(&mut stream, 400, json!({"error":"duplicate length"}), false).await;
         }
         if k.eq_ignore_ascii_case("content-type") {
             content_type = Some(v)

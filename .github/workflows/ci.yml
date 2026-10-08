@@ -29,6 +29,10 @@ jobs:
       - name: Cache the build
         uses: Swatinem/rust-cache@v2
 
+      - name: Set up Windows SDK resource compiler
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Check formatting
         run: cargo fmt --all -- --check
 
