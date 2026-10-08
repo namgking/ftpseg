@@ -60,28 +60,6 @@ pub(super) fn default_browser_command(url: &str) -> Result<(String, Vec<String>)
     prepare(parts, url)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn preserves_arguments_and_replaces_url_without_shell() {
-        let exe = std::env::current_exe()
-            .unwrap()
-            .to_string_lossy()
-            .into_owned();
-        let (_, args) = prepare(
-            vec![exe.clone(), "--single-argument".into(), "%1".into()],
-            "http://127.0.0.1:17721/",
-        )
-        .unwrap();
-        assert_eq!(args, ["--single-argument", "http://127.0.0.1:17721/"]);
-        let (_, args) = prepare(vec![exe], "http://127.0.0.1:17721/").unwrap();
-        assert_eq!(args, ["http://127.0.0.1:17721/"]);
-        assert!(prepare(vec![], "url").is_err());
-        assert!(prepare(vec!["browser.exe".into()], "url").is_err());
-    }
-}
-
 fn prepare(mut parts: Vec<String>, url: &str) -> Result<(String, Vec<String>), String> {
     if parts.is_empty() {
         return Err("默认浏览器命令为空".into());
@@ -111,4 +89,26 @@ fn prepare(mut parts: Vec<String>, url: &str) -> Result<(String, Vec<String>), S
         parts.push(url.into());
     }
     Ok((program, parts))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn preserves_arguments_and_replaces_url_without_shell() {
+        let exe = std::env::current_exe()
+            .unwrap()
+            .to_string_lossy()
+            .into_owned();
+        let (_, args) = prepare(
+            vec![exe.clone(), "--single-argument".into(), "%1".into()],
+            "http://127.0.0.1:17721/",
+        )
+        .unwrap();
+        assert_eq!(args, ["--single-argument", "http://127.0.0.1:17721/"]);
+        let (_, args) = prepare(vec![exe], "http://127.0.0.1:17721/").unwrap();
+        assert_eq!(args, ["http://127.0.0.1:17721/"]);
+        assert!(prepare(vec![], "url").is_err());
+        assert!(prepare(vec!["browser.exe".into()], "url").is_err());
+    }
 }
