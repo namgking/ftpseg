@@ -1,6 +1,6 @@
 # ftpseg — 多线程分段 FTP/FTPS 下载客户端
 
-[![CI](https://github.com/example/ftpseg/actions/workflows/ci.yml/badge.svg)](.github/workflows/ci.yml)
+[![CI](https://github.com/namgking/ftpseg/actions/workflows/ci.yml/badge.svg)](.github/workflows/ci.yml)
 
 用 Rust 编写的跨平台 FTP/FTPS 客户端，提供命令行和本机浏览器 GUI；核心能力是**多线程分段并行下载**：把远端文件切成若干字节区间，用多条连接同时抓取，每个区间单独用 `REST` 定位后 `RETR`，并直接按绝对偏移写入本地文件。中断后可以从断点继续，不必重下已经拿到的部分。
 
